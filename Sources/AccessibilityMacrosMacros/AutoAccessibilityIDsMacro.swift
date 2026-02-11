@@ -10,32 +10,77 @@ public struct AutoAccessibilityIDsMacro: MemberMacro {
         in context: some MacroExpansionContext
     ) throws -> [DeclSyntax] {
 
-        let helpers = declaration.memberBlock.members.compactMap { member -> String? in
-            guard let varDecl = member.decl.as(VariableDeclSyntax.self),
-                  varDecl.attributes.contains(where: {
-                      $0.as(AttributeSyntax.self)?
-                        .attributeName.description
-                        .trimmingCharacters(in: .whitespacesAndNewlines)
-                        == "AutoAccessibilityID"
-                  }),
-                  let binding = varDecl.bindings.first,
-                  let identifier = binding.pattern.as(IdentifierPatternSyntax.self)
-            else { return nil }
+        // MARK: - Parse prefix argument
 
-            return "__applyAccessibilityID_\(identifier.identifier.text)()"
+        let prefix: String? = node.arguments?
+            .as(LabeledExprListSyntax.self)?
+            .first?
+            .expression
+            .as(StringLiteralExprSyntax.self)?
+            .segments
+            .compactMap { $0.as(StringSegmentSyntax.self)?.content.text }
+            .joined()
+
+        // MARK: - Extract all IBOutlet properties
+
+        let outletNames: [String] = declaration.memberBlock.members.compactMap { member in
+
+            guard let varDecl = member.decl.as(VariableDeclSyntax.self) else {
+                return nil
+            }
+
+            // Must contain @IBOutlet
+            let hasIBOutlet = varDecl.attributes.contains(where: { attr in
+                attr.as(AttributeSyntax.self)?
+                    .attributeName
+                    .description
+                    .trimmingCharacters(in: .whitespacesAndNewlines) == "IBOutlet"
+            })
+
+            guard hasIBOutlet else { return nil }
+
+            // Extract property name
+            guard let binding = varDecl.bindings.first,
+                  let identifier = binding.pattern.as(IdentifierPatternSyntax.self)?.identifier.text
+            else {
+                return nil
+            }
+
+            return identifier
         }
 
-        guard !helpers.isEmpty else { return [] }
+        // Nothing to generate
+        guard outletNames.isEmpty == false else {
+            return []
+        }
 
-        let calls = helpers.joined(separator: "\n        ")
+        // MARK: - Build applyAccessibilityIDs() body
 
-        return [
-            """
-            override func awakeFromNib() {
-                super.awakeFromNib()
-                \(raw: calls)
+        let assignments: [String] = outletNames.map { name in
+
+            let id: String
+            if let prefix {
+                id = "\(prefix).\(name)"
+            } else {
+                // Default: TypeName.outletName
+                let typeName = declaration.name.text
+                id = "\(typeName).\(name)"
             }
+
+            return """
+            \(name).accessibilityIdentifier = "\(id)"
             """
-        ]
+        }
+
+        // MARK: - Generate method
+
+        let method: DeclSyntax =
+        """
+        func applyAccessibilityIDs() {
+        \(raw: assignments.joined(separator: "\n\n"))
+        }
+        """
+
+        return [method]
     }
 }
