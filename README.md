@@ -31,7 +31,7 @@ Or directly in `Package.swift`:
 ```swift
 .package(
     url: "https://github.com/Dimalgorevich/accessibility-macros",
-    from: "1.1.0"
+    from: "1.1.1"
 )
 ```
 
