@@ -1,6 +1,6 @@
 import Foundation
 
-@attached(peer, names: arbitrary)
+@attached(accessor)
 public macro AutoAccessibilityID(_ value: String? = nil) =
     #externalMacro(
         module: "AccessibilityMacrosMacros",
