@@ -63,7 +63,12 @@ public struct AutoAccessibilityIDsMacro: MemberMacro {
                 id = "\(prefix).\(name)"
             } else {
                 // Default: TypeName.outletName
-                let typeName = declaration.name.text
+                let typeName =
+                    declaration.as(ClassDeclSyntax.self)?.name.text ??
+                    declaration.as(StructDeclSyntax.self)?.name.text ??
+                    declaration.as(ActorDeclSyntax.self)?.name.text ??
+                    "UnknownType"
+
                 id = "\(typeName).\(name)"
             }
 
