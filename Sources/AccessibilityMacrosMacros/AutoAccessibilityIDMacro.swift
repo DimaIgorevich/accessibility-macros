@@ -3,6 +3,10 @@ import SwiftSyntax
 import SwiftSyntaxBuilder
 import SwiftSyntaxMacros
 
+import SwiftSyntax
+import SwiftSyntaxBuilder
+import SwiftSyntaxMacros
+
 public struct AutoAccessibilityIDMacro: AccessorMacro {
 
     public static func expansion(
@@ -11,29 +15,26 @@ public struct AutoAccessibilityIDMacro: AccessorMacro {
         in context: some MacroExpansionContext
     ) throws -> [AccessorDeclSyntax] {
 
-        guard
-            let varDecl = declaration.as(VariableDeclSyntax.self),
-            let binding = varDecl.bindings.first,
-            let identifier = binding.pattern
-                .as(IdentifierPatternSyntax.self)?
-                .identifier.text
+        guard let varDecl = declaration.as(VariableDeclSyntax.self),
+              let binding = varDecl.bindings.first,
+              let identifier = binding.pattern.as(IdentifierPatternSyntax.self)?.identifier.text
         else {
             return []
         }
 
-        // Optional override: @AutoAccessibilityID("auth.loginButton")
+        // Optional override
         let customID = node.arguments?.description
             .replacingOccurrences(of: "\"", with: "")
             .trimmingCharacters(in: .whitespacesAndNewlines)
 
-        let finalID = (customID?.isEmpty == false)
+        let resolvedID = customID?.isEmpty == false
             ? customID!
             : identifier
 
         return [
             """
             didSet {
-                self.\(raw: identifier).accessibilityIdentifier = "\(raw: finalID)"
+                self.\(raw: identifier).accessibilityIdentifier = "\(raw: resolvedID)"
             }
             """
         ]
