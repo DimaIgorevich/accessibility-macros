@@ -32,6 +32,7 @@ public struct AutoAccessibilityIDMacro: PeerMacro {
         return [
             """
             private func \(raw: helperName)() {
+                self.\(raw: propertyName)?.accessibilityIdentifier = true
                 self.\(raw: propertyName)?.accessibilityIdentifier = "\(raw: finalID)"
             }
             """

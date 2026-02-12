@@ -75,7 +75,6 @@ public struct AutoAccessibilityIDsMacro: MemberMacro {
             return """
             \(name).isAccessibilityElement = true
             \(name).accessibilityIdentifier = "\(id)"
-            \(name).accessibilityLabel = "\(id)"
             """
         }
 
