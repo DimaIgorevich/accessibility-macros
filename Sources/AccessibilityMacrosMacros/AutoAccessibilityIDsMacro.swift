@@ -46,6 +46,10 @@ public struct AutoAccessibilityIDsMacro: MemberMacro {
                 return nil
             }
 
+            let isLayoutConstraint = binding.typeAnnotation?.type.tokens(viewMode: .sourceAccurate)
+                .contains { $0.tokenKind == .identifier("NSLayoutConstraint") } ?? false
+            guard !isLayoutConstraint else { return nil }
+
             return identifier
         }
 
